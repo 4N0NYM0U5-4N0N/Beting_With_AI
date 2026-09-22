@@ -22,6 +22,7 @@ from .data_loader import load_and_clean, load_current_odds
 from .features import build_current_features, build_features, predictor_columns
 from .leakage import audit_features, write_leakage_report
 from .models import chronological_splits, evaluate_predictions, fit_predictions, split_summary
+from .oos_audit import create_oos_audit
 from .odds import validate_current_market
 from .report import (
     write_cleaning_report,
@@ -259,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Leakage-controlled EPL quantitative research engine.")
     parser.add_argument(
         "command",
-        choices=("audit", "build_features", "leakage_audit", "validate_features", "backtest", "full_analysis", "analyze_current"),
+        choices=("audit", "build_features", "leakage_audit", "validate_features", "backtest", "full_analysis", "analyze_current", "oos_audit"),
     )
     parser.add_argument("path", nargs="?", default=str(CURRENT_ODDS_PATH))
     args = parser.parse_args(argv)
@@ -305,6 +306,26 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "analyze_current":
         analyze_current(args.path)
         return 0
+    if args.command == "oos_audit":
+        audit, reconciliation, errors = create_oos_audit()
+        print("OOS audit export created:")
+        print("exports/oos_backtest_audit.csv")
+        print("")
+        print("Reconciliation report:")
+        print("exports/oos_audit_reconciliation.md")
+        print("")
+        print(f"Rows exported:\n{len(audit)}")
+        print("")
+        print(f"Models included:\n{', '.join(sorted(audit['model'].unique()))}")
+        print("")
+        parsed_dates = pd.to_datetime(audit["date"], dayfirst=True)
+        print(f"OOS date range:\n{parsed_dates.min().date()} to {parsed_dates.max().date()}")
+        print("")
+        print(f"Reconciliation status:\n{'PASS' if not errors and (reconciliation['match'] == 'YES').all() else 'FAIL'}")
+        if errors:
+            print("\nValidation issues:")
+            print("\n".join(f"- {error}" for error in errors))
+        return 0 if not errors and (reconciliation["match"] == "YES").all() else 1
     return 1
 
 

@@ -1,0 +1,175 @@
+Do NOT change the existing EPL research methodology, models, features, chronological splits, leakage controls, or backtest logic.
+
+I need a compact audit export so an external reviewer can independently inspect the individual out-of-sample predictions and verify the reported backtest results.
+
+### Goal
+
+Create:
+
+`exports/oos_backtest_audit.csv`
+
+This must contain ONLY selections from the existing 2024/25–2025/26 OUT-OF-SAMPLE period.
+
+Do not regenerate or alter the existing analysis. Use the exact outputs/data already produced by the successful:
+
+`python -m src.main full_analysis`
+
+run.
+
+### Required columns
+
+Include these columns exactly:
+
+```text
+date
+season
+home_team
+away_team
+actual_result
+model
+split
+selected_outcome
+model_probability
+market_probability
+odds
+edge
+profit
+```
+
+### Requirements
+
+1. Include ONLY rows where:
+
+   * `split = OUT-OF-SAMPLE`
+   * and an actual fixed-rule backtest selection was made.
+
+2. Include every model that currently has OOS backtest selections:
+
+   * Logistic Regression
+   * Random Forest
+   * Gradient Boosting
+   * Any other existing model only if it already appears in the current backtest output.
+
+3. Do NOT create new selections.
+
+4. Do NOT change the existing 0.05 edge threshold.
+
+5. Do NOT retrain models.
+
+6. Do NOT modify probabilities.
+
+7. Do NOT modify odds.
+
+8. Do NOT normalize or recalculate values differently from the existing engine.
+
+9. Preserve the exact values used by the existing backtest wherever possible.
+
+10. `actual_result` must represent the actual 1X2 result for the fixture:
+
+    * H = home win
+    * D = draw
+    * A = away win
+
+11. `selected_outcome` must be the exact 1X2 outcome selected by the existing backtest.
+
+12. `model_probability` must be the probability assigned by that model to the selected outcome.
+
+13. `market_probability` must be the bookmaker probability used by the existing backtest for that same selected outcome.
+
+14. `odds` must be the exact odds used by the existing backtest for that selection.
+
+15. `edge` must be the exact edge used by the existing backtest.
+
+16. `profit` must be the exact hypothetical 1-unit profit/loss used by the existing backtest.
+
+### Critical audit requirement
+
+Before exporting, verify that aggregating this new CSV reproduces the existing OOS backtest summary.
+
+For each model, calculate from the exported rows:
+
+* number of selections
+* wins
+* losses
+* win rate
+* total profit
+* ROI
+* average odds
+* maximum drawdown
+* longest losing streak
+
+Compare those numbers against the existing:
+
+`backtests/backtest_summary.csv`
+
+Do NOT silently alter the original backtest if there is a discrepancy.
+
+Instead, create:
+
+`exports/oos_audit_reconciliation.md`
+
+containing a table like:
+
+| Model               | Existing selections | Export selections | Existing ROI | Export ROI | Match  |
+| ------------------- | ------------------: | ----------------: | -----------: | ---------: | ------ |
+| Logistic Regression |                 ... |               ... |          ... |        ... | YES/NO |
+| Random Forest       |                 ... |               ... |          ... |        ... | YES/NO |
+| Gradient Boosting   |                 ... |               ... |          ... |        ... | YES/NO |
+
+Also report any discrepancy and explain its exact cause.
+
+### Additional validation
+
+Verify:
+
+* OOS dates are only 2024/25 and 2025/26.
+* No training or validation rows are included.
+* No duplicate fixture/model/selection combinations exist.
+* `selected_outcome` is one of H/D/A.
+* `actual_result` is one of H/D/A.
+* probabilities are between 0 and 1.
+* odds are greater than 1.
+* edge values are consistent with the existing engine.
+* profit values are consistent with the existing engine.
+
+### Do not
+
+Do NOT:
+
+* add a UI
+* add new models
+* change the existing models
+* change the feature engineering
+* change the train/validation/OOS split
+* change the edge threshold
+* introduce SportyBet data
+* scrape any website
+* connect to any betting account
+* place or automate bets
+* claim that the results demonstrate a profitable strategy
+
+### Final output
+
+After completing the export, print:
+
+```text
+OOS audit export created:
+exports/oos_backtest_audit.csv
+
+Reconciliation report:
+exports/oos_audit_reconciliation.md
+
+Rows exported:
+<number>
+
+Models included:
+<list>
+
+OOS date range:
+<earliest> to <latest>
+
+Reconciliation status:
+PASS / FAIL
+```
+
+Finally, run a syntax/readability check on both generated files and confirm that they can be opened as valid CSV/Markdown files.
