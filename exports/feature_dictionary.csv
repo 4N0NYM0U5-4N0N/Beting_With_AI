@@ -1,0 +1,81 @@
+feature_name,source_columns,calculation_method,information_cutoff,same_match_information_can_enter,future_matches_can_enter,classification,audit_reason
+away_league_position_before_match,prior results in current season,"table sorted by points, goal difference, goals scored",strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_odds,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_away_goal_difference,prior away-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_away_goals_conceded,prior away-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_away_goals_scored,prior away-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_away_matches_played,prior away-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_away_points_per_match,prior away-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_overall_draws,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_overall_goal_difference,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_overall_goals_conceded,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_overall_goals_scored,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_overall_losses,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_overall_matches_played,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_overall_points_per_match,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_overall_wins,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_corners,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_goal_difference,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_goals_conceded,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_goals_scored,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_matches_available,historical matches before fixture,count of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_points,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_shots,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_shots_on_target,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling10_yellow_cards,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_corners,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_goal_difference,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_goals_conceded,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_goals_scored,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_matches_available,historical matches before fixture,count of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_points,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_shots,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_shots_on_target,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+away_team_rolling5_yellow_cards,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+bookmaker_implied_away,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+bookmaker_implied_draw,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+bookmaker_implied_home,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+bookmaker_overround,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+bookmaker_prob_away,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+bookmaker_prob_draw,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+bookmaker_prob_home,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+draw_odds,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+h2h_away_win_rate,prior head-to-head results,mean/rate over prior same-team fixtures,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+h2h_draw_rate,prior head-to-head results,mean/rate over prior same-team fixtures,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+h2h_home_perspective_goal_difference,prior head-to-head results,mean/rate over prior same-team fixtures,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+h2h_home_win_rate,prior head-to-head results,mean/rate over prior same-team fixtures,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+h2h_matches_played,prior head-to-head results,mean/rate over prior same-team fixtures,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_league_position_before_match,prior results in current season,"table sorted by points, goal difference, goals scored",strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_odds,historical bookmaker odds,decimal odds converted to implied and normalized probabilities,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_home_goal_difference,prior home-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_home_goals_conceded,prior home-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_home_goals_scored,prior home-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_home_matches_played,prior home-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_home_points_per_match,prior home-only matches for team,venue-restricted cumulative mean,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_overall_draws,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_overall_goal_difference,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_overall_goals_conceded,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_overall_goals_scored,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_overall_losses,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_overall_matches_played,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_overall_points_per_match,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_overall_wins,historical match results and statistics,cumulative aggregate,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_corners,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_goal_difference,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_goals_conceded,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_goals_scored,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_matches_available,historical matches before fixture,count of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_points,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_shots,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_shots_on_target,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling10_yellow_cards,historical match statistics,mean of last 10 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_corners,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_goal_difference,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_goals_conceded,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_goals_scored,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_matches_available,historical matches before fixture,count of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_points,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_shots,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_shots_on_target,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+home_team_rolling5_yellow_cards,historical match statistics,mean of last 5 available matches,strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.
+league_position_difference_before_match,prior results in current season,"table sorted by points, goal difference, goals scored",strictly before current fixture date,NO,NO,SAFE,Metadata states a strict pre-match cutoff.

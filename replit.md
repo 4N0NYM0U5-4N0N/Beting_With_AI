@@ -1,6 +1,6 @@
-# [Project name]
+# EPL Quantitative Research Engine
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Python-only research and backtesting engine that rebuilds leakage-controlled EPL pre-match features and evaluates them chronologically.
 
 ## Run & Operate
 
@@ -10,6 +10,16 @@ _Replace the heading above with the project's name, and this line with one sente
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
+
+## Python CLI
+
+- `python -m src.main full_analysis` — run cleaning, feature rebuild, leakage audit, model evaluation, backtest, and report generation
+- `python -m src.main audit` — generate the cleaning audit
+- `python -m src.main build_features` — rebuild pre-match features
+- `python -m src.main leakage_audit` — classify predictors as SAFE, LEAKAGE, or UNKNOWN
+- `python -m src.main validate_features` — generate manual spot-check traces
+- `python -m src.main backtest` — run the fixed theoretical one-unit backtest
+- `python -m src.main analyze_current current_sportybet_odds.csv` — analyze manually supplied current odds
 
 ## Stack
 
@@ -22,23 +32,33 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `src/` — Python engine modules and CLI
+- `data/raw/` — authoritative historical data and audit-only legacy files
+- `exports/` — cleaning, leakage, feature, model, and calibration outputs
+- `backtests/` — selection-level and grouped theoretical backtest outputs
+- `reports/` — final research report
+- `research_brief.txt` — source requirements for this project
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Same-date fixtures are processed as a batch because kickoff times are unavailable; no same-date result is used as pre-match information.
+- The historical-clean CSV is authoritative; legacy engineered CSVs are never model predictors.
+- Suspicious source records are reported rather than silently corrected.
+- Out-of-sample parameters are frozen; one fixed edge threshold is used for the research backtest.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+The CLI produces reproducible pre-match features, leakage classifications, chronological model metrics,
+calibration tables, manual validation traces, and clearly labeled theoretical backtest results.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+The work must remain Python-only and research-focused; it must never place bets or connect to betting accounts.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run `python -m src.main full_analysis` after changing feature logic.
+- Current odds are inference-only and must stay in a separate manually supplied CSV.
 
 ## Pointers
 

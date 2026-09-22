@@ -1,0 +1,1 @@
+- [Same-date cutoff](same-date-cutoff.md) — kickoff times are unavailable, so pre-match features must exclude every result from the current fixture date.

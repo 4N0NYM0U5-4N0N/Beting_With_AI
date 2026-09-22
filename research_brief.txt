@@ -1,0 +1,620 @@
+Build a Python-only quantitative English Premier League analytics engine.
+
+IMPORTANT: Do NOT build a UI, dashboard, authentication system, mobile app, payment system, automated betting system, or unnecessary frontend. This project is purely a data-processing, statistical-analysis, leakage-audit, and backtesting engine.
+
+I have uploaded these existing files:
+
+* epl_historical_clean.csv
+* epl_features.csv
+* claude_analysis_dataset.csv
+* DATA_DICTIONARY.md
+* DATASET_REPORT.md
+
+The purpose of this project is to determine whether historical EPL statistics contain any statistically defensible pre-match signal and whether any apparent edge survives strict chronological out-of-sample testing.
+
+This is research/backtesting only. Never place bets or connect to a betting account.
+
+==================================================
+
+1. PROJECT STRUCTURE
+   ==================================================
+
+Create a clean structure similar to:
+
+data/
+raw/
+processed/
+
+reports/
+audits/
+backtests/
+models/
+
+exports/
+
+src/
+data_loader.py
+cleaning.py
+features.py
+leakage.py
+models.py
+backtest.py
+evaluation.py
+odds.py
+report.py
+main.py
+
+tests/
+
+requirements.txt
+
+README.md
+
+Use pandas, numpy, scikit-learn and other standard scientific Python packages only when genuinely necessary.
+
+Keep the implementation reproducible.
+
+Set random seeds wherever randomness is used.
+
+==================================================
+2. INPUT DATA
+=============
+
+First inspect all five supplied files.
+
+Do not blindly trust the existing engineered features.
+
+The previous audit found:
+
+* 5,700 valid EPL matches
+* 15 seasons from 2011/12 through 2025/26
+* 380 matches per season
+* 39 unique teams
+* no duplicate matches
+* historical 1X2 bookmaker odds available
+* no historical Over/Under 2.5 odds
+* no historical BTTS odds
+* no xG
+* no possession
+* no lineups/injury information
+
+The previous audit also found that these existing features are unreliable:
+
+* home_goals_avg_5
+* away_goals_avg_5
+* home_matches_before
+* away_matches_before
+
+DO NOT use those existing engineered features.
+
+Use epl_historical_clean.csv as the authoritative historical source.
+
+==================================================
+3. DATA CLEANING
+================
+
+Validate:
+
+* date parsing
+* season
+* home team
+* away team
+* full-time result
+* full-time goals
+* bookmaker odds
+* match statistics
+
+Handle the mixed date formats correctly.
+
+Do not silently allow ambiguous date parsing.
+
+Remove fully blank rows.
+
+Check for:
+
+* duplicate matches
+* impossible scores
+* invalid odds
+* missing teams
+* missing dates
+* impossible statistical relationships
+
+For example, flag records where shots_on_target > shots.
+
+Do not silently modify suspicious records.
+
+Create:
+
+exports/cleaning_report.md
+
+containing every cleaning decision.
+
+==================================================
+4. REBUILD FEATURES FROM SCRATCH
+================================
+
+This is the most important part.
+
+Build every pre-match feature from epl_historical_clean.csv.
+
+For every match, the feature calculation must use ONLY matches that occurred strictly before that match.
+
+Never use information from the match currently being predicted.
+
+Never use future matches.
+
+Build at minimum:
+
+TEAM FORM
+
+* matches played previously
+* points per match
+* wins/draws/losses
+* goals scored
+* goals conceded
+* goal difference
+
+ROLLING FORM
+
+5-match and 10-match:
+
+* goals scored
+* goals conceded
+* goal difference
+* points
+* shots
+* shots on target
+* corners
+* yellow cards
+
+HOME/AWAY FORM
+
+For the home team:
+
+* previous overall form
+* previous home-only form
+
+For the away team:
+
+* previous overall form
+* previous away-only form
+
+HEAD-TO-HEAD
+
+Only include H2H information from matches that occurred before the current fixture.
+
+Do not use future H2H results.
+
+LEAGUE POSITION
+
+If reconstructing league position, calculate the table using only results available before the match.
+
+Never use the final season table.
+
+SAMPLE SIZE
+
+For every rolling feature, also track how many historical matches were actually available.
+
+Do not pretend that a team with only 2 previous matches has a genuine 5-match history.
+
+==================================================
+5. LEAKAGE AUDIT
+================
+
+Create an automated leakage detector.
+
+For every engineered feature record:
+
+* feature name
+* source columns
+* calculation method
+* information cutoff
+* whether same-match information can enter
+* whether future matches can enter
+* classification
+
+Classification must be one of:
+
+SAFE
+LEAKAGE
+UNKNOWN
+
+Do not allow UNKNOWN features into modeling.
+
+Create:
+
+exports/leakage_audit.md
+
+Also create:
+
+exports/feature_dictionary.csv
+
+==================================================
+6. MANUAL SPOT CHECKS
+=====================
+
+Select at least 20 matches across different seasons.
+
+For each selected match, trace the underlying previous matches used to calculate several features.
+
+Show examples such as:
+
+Current match:
+Chelsea vs Arsenal
+Date:
+...
+
+Chelsea previous 5 matches:
+
+1. ...
+2. ...
+3. ...
+4. ...
+5. ...
+
+Calculated goals average:
+...
+
+Then verify the calculation independently.
+
+Create:
+
+exports/manual_feature_validation.md
+
+==================================================
+7. DATASET V2
+=============
+
+Create:
+
+exports/epl_pre_match_features_v2.csv
+
+This should contain:
+
+* match identifiers
+* target/result columns
+* historical bookmaker odds
+* ONLY validated pre-match features
+
+Do not include same-match statistics as predictor columns.
+
+Keep target columns separate from predictor columns.
+
+==================================================
+8. CHRONOLOGICAL SPLIT
+======================
+
+Absolutely NO random train/test split.
+
+Use:
+
+TRAIN:
+2011/12 through 2021/22
+
+VALIDATION:
+2022/23 through 2023/24
+
+OUT-OF-SAMPLE TEST:
+2024/25 through 2025/26
+
+Print exact row counts for each.
+
+Verify that no match date crosses the boundaries incorrectly.
+
+==================================================
+9. BASELINE MODELS
+==================
+
+Start simple.
+
+For 1X2:
+
+Baseline A:
+Historical frequency
+
+Baseline B:
+Bookmaker implied probabilities
+
+Baseline C:
+Simple logistic regression
+
+Baseline D:
+Random forest
+
+Baseline E:
+Gradient boosting if appropriate
+
+Do not immediately build dozens of models.
+
+The purpose is to determine whether additional statistical information actually improves predictions beyond the bookmaker baseline.
+
+==================================================
+10. PROBABILITY HANDLING
+========================
+
+For decimal odds:
+
+implied_probability = 1 / odds
+
+Calculate bookmaker overround:
+
+sum(implied probabilities)
+
+Also calculate normalized implied probabilities where appropriate.
+
+Never confuse bookmaker implied probability with a true probability.
+
+For every model produce:
+
+* predicted probability
+* actual result
+* log loss
+* Brier score
+* calibration information
+
+==================================================
+11. BACKTEST
+============
+
+Backtest strictly chronologically.
+
+Use hypothetical 1-unit stakes.
+
+Never use future information.
+
+Never optimize parameters on the final test period.
+
+Report:
+
+* number of selections
+* wins
+* losses
+* win rate
+* average odds
+* total theoretical profit/loss
+* ROI
+* maximum drawdown
+* longest losing streak
+* results by season
+* results by market
+* results by probability range
+* results by estimated edge range
+
+Clearly distinguish:
+
+TRAINING RESULTS
+VALIDATION RESULTS
+OUT-OF-SAMPLE RESULTS
+
+==================================================
+12. OVERFITTING PROTECTION
+==========================
+
+This is critical.
+
+Do not search hundreds of thresholds and then select whichever produces the highest test ROI.
+
+If multiple strategies are tested, record how many were tested.
+
+If a strategy is selected using validation data, freeze it before testing on the out-of-sample period.
+
+Report evidence of possible overfitting.
+
+Include a section:
+
+"Multiple Testing / Overfitting Risk"
+
+==================================================
+13. BOOKMAKER BASELINE
+======================
+
+The bookmaker odds are extremely important.
+
+Determine whether a statistical model actually adds information beyond the bookmaker market.
+
+Compare:
+
+Bookmaker probability
+vs
+Model probability
+
+and measure whether the model improves:
+
+* log loss
+* Brier score
+* calibration
+* theoretical ROI
+
+Do not automatically assume the model is better because it has a positive ROI in one period.
+
+==================================================
+14. SPORTYBET CURRENT ODDS MODULE
+=================================
+
+Do NOT scrape SportyBet.
+
+Do NOT log into SportyBet.
+
+Do NOT place bets.
+
+Create a simple CSV input format:
+
+current_sportybet_odds.csv
+
+Expected columns:
+
+date
+home_team
+away_team
+market
+selection
+odds
+
+Example:
+
+2026-09-25
+Team A
+Team B
+1X2
+Home
+2.10
+
+Allow the user to manually export or enter SportyBet odds.
+
+Create a parser that validates the file.
+
+==================================================
+15. CURRENT MATCH ANALYSIS
+==========================
+
+Create a command:
+
+python -m src.main analyze_current current_sportybet_odds.csv
+
+The engine should:
+
+1. Match current fixtures to the appropriate teams.
+2. Generate only pre-match features.
+3. Generate model probabilities.
+4. Calculate SportyBet implied probabilities.
+5. Calculate normalized market probabilities.
+6. Compare model probability against market probability.
+7. Calculate theoretical expected value.
+
+For decimal odds:
+
+EV = (model_probability × odds) - 1
+
+But clearly label this as MODEL-BASED THEORETICAL EV, not guaranteed profit.
+
+Do not fabricate missing odds.
+
+Do not make a recommendation simply because EV is positive.
+
+Instead classify results descriptively, for example:
+
+MODEL PROBABILITY ABOVE MARKET IMPLIED PROBABILITY
+
+or
+
+MODEL PROBABILITY BELOW MARKET IMPLIED PROBABILITY
+
+==================================================
+16. CURRENT DATA MUST BE SEPARATE
+=================================
+
+Do not mix current fixtures into historical training data.
+
+Current matches are prediction/inference inputs only.
+
+Do not update the historical model using current results until those matches are actually completed and deliberately added to the historical dataset.
+
+==================================================
+17. REPORTING
+=============
+
+Generate:
+
+reports/final_research_report.md
+
+It must contain:
+
+1. Dataset summary
+2. Data-quality findings
+3. Leakage audit
+4. Feature methodology
+5. Manual validation
+6. Chronological split
+7. Model methodology
+8. Baseline results
+9. Validation results
+10. Out-of-sample results
+11. Backtest results
+12. Calibration
+13. Overfitting analysis
+14. Limitations
+15. SportyBet current-odds methodology
+
+Most importantly, answer:
+
+"Did any statistical approach demonstrate a persistent out-of-sample advantage after accounting for bookmaker odds and strict leakage controls?"
+
+Do NOT claim guaranteed winnings.
+
+==================================================
+18. COMMANDS
+============
+
+Create simple commands:
+
+python -m src.main audit
+
+python -m src.main build_features
+
+python -m src.main leakage_audit
+
+python -m src.main validate_features
+
+python -m src.main backtest
+
+python -m src.main full_analysis
+
+python -m src.main analyze_current current_sportybet_odds.csv
+
+==================================================
+19. FULL ANALYSIS COMMAND
+=========================
+
+The command:
+
+python -m src.main full_analysis
+
+must execute:
+
+1. load data
+2. clean data
+3. validate data
+4. rebuild features
+5. run leakage audit
+6. perform manual feature validation
+7. create chronological splits
+8. train baseline models
+9. evaluate validation period
+10. evaluate out-of-sample period
+11. run backtest
+12. calculate bookmaker comparison
+13. generate all reports
+14. export all datasets
+
+Do not skip steps because a previous file already exists unless it has been verified.
+
+==================================================
+20. IMPORTANT FINAL REQUIREMENT
+===============================
+
+Before telling me the project is complete, actually execute:
+
+python -m src.main full_analysis
+
+and inspect the resulting reports.
+
+Do not simply create code and claim that it works.
+
+If something fails, fix it and rerun it.
+
+At the end, print:
+
+* number of historical matches
+* number of features
+* number of SAFE features
+* number of LEAKAGE features
+* number of UNKNOWN features
+* training matches
+* validation matches
+* out-of-sample matches
+* model performance
+* bookmaker baseline performance
+* out-of-sample backtest results
+* generated report paths
+
+Keep the system research-focused, reproducible, and resistant to data leakage and overfitting.
