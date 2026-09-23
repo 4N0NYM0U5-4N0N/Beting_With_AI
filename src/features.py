@@ -334,35 +334,56 @@ def build_features(frame: pd.DataFrame) -> FeatureBuildResult:
 
 
 def build_current_features(historical: pd.DataFrame, current: pd.DataFrame) -> FeatureBuildResult:
+    # Current fixtures are inference-only. Build each fixture against a
+    # historical prefix strictly earlier than its date so a historical result
+    # on the same calendar date cannot enter the current fixture's features.
+    # This deliberately leaves build_features() and the historical methodology
+    # unchanged.
     historic = historical.copy()
-    historic["_is_current"] = False
+    historic["match_date"] = pd.to_datetime(historic["match_date"], errors="raise")
     current_rows = current.copy()
-    current_rows["_is_current"] = True
-    for col in (
-        "full_time_result",
-        "full_time_home_goals",
-        "full_time_away_goals",
-        "home_shots",
-        "away_shots",
-        "home_shots_on_target",
-        "away_shots_on_target",
-        "home_corners",
-        "away_corners",
-        "home_fouls",
-        "away_fouls",
-        "home_yellow_cards",
-        "away_yellow_cards",
-        "home_red_cards",
-        "away_red_cards",
-    ):
-        if col not in current_rows:
-            current_rows[col] = np.nan
-    combined = pd.concat([historic, current_rows], ignore_index=True, sort=False)
-    result = _build(combined, include_current=True)
+    current_rows["match_date"] = pd.to_datetime(current_rows["match_date"], errors="raise")
+    all_frames: list[pd.DataFrame] = []
+    all_dictionary: dict[str, dict[str, str]] = {}
+    all_traces: list[dict[str, Any]] = []
+
+    for _, current_row in current_rows.iterrows():
+        prefix = historic[historic["match_date"] < current_row["match_date"]].copy()
+        one_current = current_row.to_frame().T.copy()
+        one_current["_is_current"] = True
+        for col in (
+            "full_time_result",
+            "full_time_home_goals",
+            "full_time_away_goals",
+            "home_shots",
+            "away_shots",
+            "home_shots_on_target",
+            "away_shots_on_target",
+            "home_corners",
+            "away_corners",
+            "home_fouls",
+            "away_fouls",
+            "home_yellow_cards",
+            "away_yellow_cards",
+            "home_red_cards",
+            "away_red_cards",
+        ):
+            if col not in one_current:
+                one_current[col] = np.nan
+        prefix["_is_current"] = False
+        result = _build(pd.concat([prefix, one_current], ignore_index=True, sort=False), include_current=True)
+        current_id = current_row["match_id"]
+        current_frame = result.frame[result.frame["match_id"] == current_id]
+        all_frames.append(current_frame)
+        all_traces.extend(result.validation_traces)
+        for item in result.feature_dictionary:
+            all_dictionary[item["feature_name"]] = item
+
+    frame = pd.concat(all_frames, ignore_index=True) if all_frames else pd.DataFrame()
     return FeatureBuildResult(
-        frame=result.frame[result.frame["match_id"].isin(set(current_rows["match_id"]))].reset_index(drop=True),
-        feature_dictionary=result.feature_dictionary,
-        validation_traces=result.validation_traces,
+        frame=frame,
+        feature_dictionary=list(all_dictionary.values()),
+        validation_traces=all_traces,
     )
 
 

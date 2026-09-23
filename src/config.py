@@ -9,6 +9,7 @@ AUDITS_DIR = REPORTS_DIR / "audits"
 BACKTESTS_DIR = ROOT / "backtests"
 MODELS_DIR = ROOT / "models"
 EXPORTS_DIR = ROOT / "exports"
+TEAM_ALIASES_PATH = PROCESSED_DIR / "team_aliases.csv"
 
 HISTORICAL_PATH = RAW_DIR / "epl_historical_clean.csv"
 CURRENT_ODDS_PATH = ROOT / "current_sportybet_odds.csv"

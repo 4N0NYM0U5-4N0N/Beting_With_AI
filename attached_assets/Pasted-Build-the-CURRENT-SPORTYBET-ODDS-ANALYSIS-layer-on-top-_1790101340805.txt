@@ -1,0 +1,626 @@
+Build the CURRENT SPORTYBET ODDS ANALYSIS layer on top of the existing validated EPL quantitative research engine.
+
+IMPORTANT: The existing historical research engine has already been audited. DO NOT modify its historical data, feature engineering, leakage controls, chronological splits, models, or existing backtest results.
+
+The existing methodology must remain frozen.
+
+## OBJECTIVE
+
+Allow me to provide current SportyBet 1X2 odds in a CSV file and have the system:
+
+1. Validate the current odds.
+2. Match the teams against the historical team names.
+3. Generate the same pre-match features used by the validated historical engine.
+4. Apply the existing trained statistical models.
+5. Calculate bookmaker implied probabilities.
+6. Normalize bookmaker probabilities where appropriate.
+7. Compare model probabilities against market probabilities.
+8. Calculate theoretical model EV.
+9. Produce an uncertainty/calibration report.
+10. Clearly distinguish statistical evidence from speculation.
+
+This is a research/analysis tool only.
+
+DO NOT:
+
+* log into SportyBet
+* scrape SportyBet
+* place bets
+* automate betting
+* connect to betting accounts
+* generate or submit wagers
+* claim guaranteed winners
+* claim that positive theoretical EV guarantees profit
+
+---
+
+# 1. CURRENT ODDS INPUT
+
+Support this input file:
+
+`current_sportybet_odds.csv`
+
+Required columns:
+
+```text
+date
+home_team
+away_team
+market
+selection
+odds
+```
+
+Example:
+
+```csv
+date,home_team,away_team,market,selection,odds
+2026-09-26,Arsenal,Manchester City,1X2,H,2.45
+2026-09-26,Arsenal,Manchester City,1X2,D,3.60
+2026-09-26,Arsenal,Manchester City,1X2,A,2.85
+```
+
+Only support the `1X2` market initially.
+
+Valid selections:
+
+```text
+H
+D
+A
+```
+
+Odds must be decimal odds greater than 1.0.
+
+---
+
+# 2. INPUT VALIDATION
+
+Create:
+
+`src/current_odds.py`
+
+Validate:
+
+* required columns
+* valid dates
+* valid teams
+* valid market
+* valid H/D/A selections
+* decimal odds > 1
+* no impossible/duplicate selections
+* each fixture should normally contain H + D + A
+* no duplicate fixture/market/selection rows
+
+Report all validation errors clearly.
+
+Do not silently repair bad input.
+
+Create:
+
+`exports/current_odds_validation.md`
+
+containing:
+
+* number of fixtures
+* number of odds rows
+* invalid rows
+* missing selections
+* unknown teams
+* duplicate selections
+* odds range
+* bookmaker overround by fixture
+
+---
+
+# 3. TEAM NAME MAPPING
+
+Use the exact historical team naming convention already established by the engine.
+
+Create a controlled mapping layer if necessary:
+
+`data/processed/team_aliases.csv`
+
+Example:
+
+```text
+input_name,canonical_name
+Man Utd,Manchester United
+Manchester Utd,Manchester United
+```
+
+Do NOT guess mappings silently.
+
+If an unknown team appears, flag it and stop analysis for that fixture.
+
+Do not modify the historical dataset.
+
+---
+
+# 4. FEATURE GENERATION
+
+For each current fixture, generate the SAME pre-match feature definitions used by:
+
+`exports/epl_pre_match_features_v2.csv`
+
+Use historical matches ONLY.
+
+Current fixtures must NEVER be used to calculate their own historical features.
+
+Features must be based only on matches that occurred before the current fixture date.
+
+Use the existing feature-generation implementation rather than creating a second competing implementation.
+
+Include:
+
+* overall team form
+* rolling 5-match form
+* rolling 10-match form
+* home-only form
+* away-only form
+* goals scored/conceded
+* goal difference
+* points per match
+* wins/draws/losses
+* shots
+* shots on target
+* corners
+* yellow cards
+* H2H history
+* reconstructed league position
+* sample sizes
+* bookmaker-related features where appropriate
+
+CRITICAL:
+
+For a fixture on date D, no match occurring on D may be used as a historical feature unless the existing methodology explicitly establishes that it was available before the fixture.
+
+To avoid same-date leakage, use the same date-ordering safeguards already implemented in the historical engine.
+
+---
+
+# 5. MODEL APPLICATION
+
+Use the EXISTING trained models.
+
+Do not retrain them using current fixtures.
+
+Use the existing:
+
+* Logistic Regression
+* Random Forest
+* Gradient Boosting
+
+If the existing implementation stores trained models as artifacts, load those artifacts.
+
+If the models are currently trained dynamically by `full_analysis`, refactor carefully so the exact validated training procedure can be reused without changing its methodology.
+
+Do NOT fit models on:
+
+* current fixtures
+* current SportyBet odds
+* future results
+* any information unavailable before the fixture
+
+Current odds are inputs for market comparison, not model training.
+
+---
+
+# 6. BOOKMAKER PROBABILITY
+
+For each fixture calculate:
+
+```text
+raw_implied_probability = 1 / odds
+```
+
+For the three 1X2 outcomes calculate:
+
+```text
+overround = P(H) + P(D) + P(A)
+```
+
+Then calculate normalized market probabilities:
+
+```text
+normalized_probability = raw_implied_probability / overround
+```
+
+Report both:
+
+* raw implied probability
+* normalized market probability
+
+Do not confuse these two quantities.
+
+---
+
+# 7. MODEL PROBABILITIES
+
+For every current fixture produce probabilities for:
+
+```text
+H
+D
+A
+```
+
+for each model.
+
+Example output:
+
+```text
+Fixture: Arsenal vs Manchester City
+
+Logistic Regression:
+H 0.42
+D 0.27
+A 0.31
+
+Random Forest:
+H 0.46
+D 0.25
+A 0.29
+
+Gradient Boosting:
+H 0.44
+D 0.28
+A 0.28
+```
+
+Ensure every model's probabilities sum approximately to 1.
+
+Report any numerical anomaly.
+
+---
+
+# 8. MARKET COMPARISON
+
+For each outcome calculate:
+
+```text
+probability_difference =
+model_probability - normalized_market_probability
+```
+
+Call this:
+
+`model_market_probability_difference`
+
+Do NOT call it guaranteed edge.
+
+Also calculate theoretical expected value:
+
+```text
+theoretical_EV = model_probability * odds - 1
+```
+
+Clearly label this:
+
+`THEORETICAL MODEL EV`
+
+It is not a guaranteed return.
+
+---
+
+# 9. CALIBRATION / UNCERTAINTY
+
+Use the historical validation/OOS calibration results already generated by the engine.
+
+Do NOT invent confidence intervals.
+
+For each current model probability, report relevant historical calibration information where available.
+
+For example:
+
+```text
+Model: Random Forest
+Predicted probability: 0.62
+Historical calibration bucket: 0.60–0.70
+Historical observed frequency: ...
+Historical sample size: ...
+```
+
+If a suitable calibration estimate is unavailable, explicitly say:
+
+`Insufficient historical calibration evidence for this probability range.`
+
+Do not manufacture uncertainty estimates.
+
+---
+
+# 10. MODEL AGREEMENT
+
+For each fixture determine whether the three models:
+
+* agree on the most probable outcome
+* partially agree
+* disagree
+
+Example:
+
+```text
+Model agreement:
+Logistic Regression → H
+Random Forest → H
+Gradient Boosting → A
+
+Agreement status: DISAGREEMENT
+```
+
+This is descriptive only.
+
+Do not convert model agreement into a betting recommendation.
+
+---
+
+# 11. MARKET AGREEMENT
+
+Also compare each model's most probable outcome with the market's highest normalized probability.
+
+Example:
+
+```text
+Market highest probability: H
+Logistic Regression: H
+Random Forest: H
+Gradient Boosting: A
+```
+
+Again, descriptive only.
+
+---
+
+# 12. CURRENT ANALYSIS OUTPUT
+
+Create:
+
+`reports/current_sportybet_analysis.md`
+
+For every fixture include:
+
+```text
+Fixture
+Date
+Market
+Bookmaker overround
+
+Market probabilities:
+H:
+D:
+A:
+
+Logistic Regression:
+H:
+D:
+A:
+
+Random Forest:
+H:
+D:
+A:
+
+Gradient Boosting:
+H:
+D:
+A:
+
+For each model/outcome:
+Odds
+Raw implied probability
+Normalized market probability
+Model probability
+Probability difference
+Theoretical EV
+
+Model agreement
+Market/model comparison
+Historical calibration information
+Data-quality warnings
+```
+
+Do NOT produce language such as:
+
+* "guaranteed"
+* "sure win"
+* "safe bet"
+* "best bet"
+* "lock"
+* "you should bet"
+* "this will win"
+
+Use neutral statistical language such as:
+
+* "model probability exceeds normalized market probability"
+* "model probability is below market probability"
+* "models disagree"
+* "historical calibration evidence is limited"
+* "theoretical EV is positive under the model assumptions"
+
+---
+
+# 13. MACHINE-READABLE OUTPUT
+
+Create:
+
+`exports/current_sportybet_analysis.csv`
+
+Columns:
+
+```text
+date
+home_team
+away_team
+market
+selection
+odds
+raw_implied_probability
+market_overround
+normalized_market_probability
+logistic_probability
+random_forest_probability
+gradient_boosting_probability
+logistic_probability_difference
+random_forest_probability_difference
+gradient_boosting_probability_difference
+logistic_theoretical_ev
+random_forest_theoretical_ev
+gradient_boosting_theoretical_ev
+model_agreement
+market_most_likely_selection
+data_quality_status
+calibration_status
+```
+
+---
+
+# 14. DATA QUALITY WARNINGS
+
+For every fixture flag:
+
+* unknown team
+* insufficient historical matches
+* insufficient rolling sample
+* missing H2H history
+* unusual bookmaker overround
+* missing H/D/A odds
+* duplicate odds
+* extreme odds
+* model probability anomaly
+* feature-generation warning
+
+Do not exclude a fixture silently.
+
+---
+
+# 15. COMMAND
+
+Add this command:
+
+```bash
+python -m src.main analyze_current current_sportybet_odds.csv
+```
+
+It should produce:
+
+```text
+exports/current_odds_validation.md
+exports/current_sportybet_analysis.csv
+reports/current_sportybet_analysis.md
+```
+
+Print a concise terminal summary:
+
+```text
+Current EPL analysis complete.
+
+Fixtures analyzed:
+X
+
+Valid fixtures:
+X
+
+Invalid fixtures:
+X
+
+Models:
+Logistic Regression
+Random Forest
+Gradient Boosting
+
+Market overround range:
+X – X
+
+Model/market probability comparisons generated:
+X
+
+Theoretical EV calculations generated:
+X
+
+Warnings:
+X
+
+Reports:
+...
+```
+
+---
+
+# 16. TESTING
+
+Create tests for:
+
+1. odds validation
+2. overround calculation
+3. normalized probability calculation
+4. model probability sums
+5. theoretical EV calculation
+6. duplicate detection
+7. team alias mapping
+8. current-date leakage protection
+9. missing H/D/A odds
+10. unknown teams
+
+Run the full test suite.
+
+Also run:
+
+```bash
+python -m src.main analyze_current current_sportybet_odds.csv
+```
+
+using a small synthetic test CSV.
+
+---
+
+# 17. CRITICAL RESEARCH INTEGRITY RULE
+
+The historical research engine is already validated.
+
+Do NOT improve the current results by:
+
+* changing the historical split
+* changing feature definitions
+* adding current matches to training
+* selecting models after seeing current outcomes
+* tuning thresholds using current results
+* changing the 0.05 historical backtest threshold
+* introducing new models
+* removing poor-performing models
+* cherry-picking fixtures
+
+The current-odds system must be an APPLICATION of the existing research methodology, not a new optimization exercise.
+
+---
+
+# 18. FINAL VERIFICATION
+
+After implementation run:
+
+```bash
+python -m src.main audit
+python -m src.main leakage_audit
+python -m src.main analyze_current current_sportybet_odds.csv
+```
+
+Confirm that the historical leakage audit remains unchanged.
+
+Then run the complete test suite.
+
+Finally report:
+
+```text
+Historical methodology changed: NO
+Historical model retraining changed: NO
+Current odds ingestion: PASS/FAIL
+Team mapping: PASS/FAIL
+Feature generation: PASS/FAIL
+Leakage protection: PASS/FAIL
+Model inference: PASS/FAIL
+Market probability calculation: PASS/FAIL
+Theoretical EV calculation: PASS/FAIL
+Calibration lookup: PASS/FAIL
+Tests: PASS/FAIL
+```
+
+Do not claim success unless the commands actually execute successfully.

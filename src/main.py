@@ -18,12 +18,12 @@ from .config import (
     PROCESSED_DIR,
     REPORTS_DIR,
 )
-from .data_loader import load_and_clean, load_current_odds
+from .current_odds import run_current_analysis
+from .data_loader import load_and_clean
 from .features import build_current_features, build_features, predictor_columns
 from .leakage import audit_features, write_leakage_report
 from .models import chronological_splits, evaluate_predictions, fit_predictions, split_summary
 from .oos_audit import create_oos_audit
-from .odds import validate_current_market
 from .report import (
     write_cleaning_report,
     write_final_report,
@@ -143,119 +143,6 @@ def _print_summary(result: dict[str, object]) -> None:
         print(path)
 
 
-def analyze_current(path: str | Path) -> None:
-    _ensure_directories()
-    cleaning = load_and_clean(HISTORICAL_PATH)
-    odds = validate_current_market(load_current_odds(path))
-    odds["selection_key"] = (
-        odds["selection"]
-        .str.upper()
-        .str.replace(" ", "", regex=False)
-        .map({"HOME": "H", "DRAW": "D", "AWAY": "A", "H": "H", "D": "D", "A": "A"})
-    )
-    one_x_two = odds[odds["market"] == "1X2"].copy()
-    odds_pivot = one_x_two.pivot_table(
-        index=["match_date", "home_team", "away_team"],
-        columns="selection_key",
-        values="odds",
-        aggfunc="first",
-    ).reset_index()
-    odds_pivot = odds_pivot.rename(columns={"H": "home_odds", "D": "draw_odds", "A": "away_odds"})
-    for col in ("home_odds", "draw_odds", "away_odds"):
-        if col not in odds_pivot:
-            odds_pivot[col] = np.nan
-    fixtures = odds[["match_date", "home_team", "away_team"]].drop_duplicates().merge(
-        odds_pivot,
-        on=["match_date", "home_team", "away_team"],
-        how="left",
-    )
-    fixtures["season"] = "CURRENT"
-    fixtures["date"] = fixtures["match_date"].dt.strftime("%Y-%m-%d")
-    fixtures["match_id"] = (
-        "CURRENT|"
-        + fixtures["date"]
-        + "|"
-        + fixtures["home_team"]
-        + "|"
-        + fixtures["away_team"]
-    )
-    feature_result = build_current_features(cleaning.frame, fixtures)
-    historical_features = build_features(cleaning.frame).frame
-    historical_features["match_date"] = pd.to_datetime(historical_features["match_date"], errors="raise")
-    historical_predictors = predictor_columns(historical_features)
-    historical_built = build_features(cleaning.frame)
-    audit = audit_features(historical_features, historical_built.feature_dictionary, historical_predictors)
-    safe_predictors = audit.loc[audit["classification"] == "SAFE", "feature_name"].tolist()
-    train_frame = historical_features
-    from .models import _make_pipeline, _aligned_probabilities
-
-    expanded = _make_pipeline("logistic_regression")
-    expanded.fit(train_frame[safe_predictors], train_frame["full_time_result"])
-    probabilities = _aligned_probabilities(expanded, feature_result.frame[safe_predictors])
-    model_rows = pd.DataFrame(
-        probabilities,
-        columns=["model_probability_home", "model_probability_draw", "model_probability_away"],
-    )
-    model_rows.insert(0, "match_id", feature_result.frame["match_id"])
-    probability_map = {
-        "Home": "model_probability_home",
-        "Draw": "model_probability_draw",
-        "Away": "model_probability_away",
-        "H": "model_probability_home",
-        "D": "model_probability_draw",
-        "A": "model_probability_away",
-    }
-    fixture_key = fixtures.set_index("match_id")[["match_date", "home_team", "away_team"]]
-    output_rows = []
-    for _, market_row in odds.iterrows():
-        key = (
-            market_row["match_date"],
-            market_row["home_team"],
-            market_row["away_team"],
-        )
-        matches = fixture_key[
-            (fixture_key["match_date"] == key[0])
-            & (fixture_key["home_team"] == key[1])
-            & (fixture_key["away_team"] == key[2])
-        ]
-        if matches.empty:
-            continue
-        match_id = matches.index[0]
-        probability_row = model_rows[model_rows["match_id"] == match_id].iloc[0]
-        model_probability = (
-            float(probability_row[probability_map.get(market_row["selection"], "model_probability_home")])
-            if market_row["market"] == "1X2"
-            else np.nan
-        )
-        market_probability = float(market_row["market_normalized_probability"])
-        output_rows.append(
-            {
-                "date": market_row["match_date"].strftime("%Y-%m-%d"),
-                "home_team": market_row["home_team"],
-                "away_team": market_row["away_team"],
-                "market": market_row["market"],
-                "selection": market_row["selection"],
-                "odds": market_row["odds"],
-                "market_implied_probability": market_row["market_implied_probability"],
-                "market_normalized_probability": market_probability,
-                "model_probability": model_probability,
-                "model_based_theoretical_ev": (model_probability * market_row["odds"] - 1) if pd.notna(model_probability) else np.nan,
-                "classification": (
-                    "MODEL PROBABILITY ABOVE MARKET IMPLIED PROBABILITY"
-                    if pd.notna(model_probability) and model_probability > market_probability
-                    else "MODEL PROBABILITY BELOW MARKET IMPLIED PROBABILITY"
-                    if pd.notna(model_probability)
-                    else "UNSUPPORTED MARKET — NO MODEL PROBABILITY"
-                ),
-                "market_overround": market_row["market_overround"],
-            }
-        )
-    output = pd.DataFrame(output_rows)
-    output.to_csv(EXPORTS_DIR / "current_match_analysis.csv", index=False)
-    print("Current odds analysis is descriptive and theoretical only; no recommendation or bet is placed.")
-    print(output.to_string(index=False))
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Leakage-controlled EPL quantitative research engine.")
     parser.add_argument(
@@ -304,8 +191,40 @@ def main(argv: list[str] | None = None) -> int:
         _print_summary(_run_pipeline())
         return 0
     if args.command == "analyze_current":
-        analyze_current(args.path)
-        return 0
+        result = run_current_analysis(args.path)
+        validation = result["validation"]
+        overrounds = validation.overrounds["overround"] if not validation.overrounds.empty else pd.Series(dtype=float)
+        print("Current EPL analysis complete.")
+        print("")
+        print(f"Fixtures analyzed:\n{result['fixtures']}")
+        print("")
+        print(f"Valid fixtures:\n{validation.valid_fixtures}")
+        print("")
+        print(f"Invalid fixtures:\n{sum(bool(errors) for errors in validation.row_errors.values())}")
+        print("")
+        print("Models:")
+        print("Logistic Regression")
+        print("Random Forest")
+        print("Gradient Boosting")
+        print("")
+        print(
+            f"Market overround range:\n"
+            f"{overrounds.min():.6f} – {overrounds.max():.6f}"
+            if not overrounds.empty
+            else "Market overround range:\nnot available"
+        )
+        print("")
+        print(f"Model/market probability comparisons generated:\n{result['fixtures'] * 9}")
+        print("")
+        print(f"Theoretical EV calculations generated:\n{result['fixtures'] * 9}")
+        print("")
+        print(f"Warnings:\n{result['warnings']}")
+        print("")
+        print("Reports:")
+        print(result["validation_path"])
+        print(result["analysis_path"])
+        print(result["report_path"])
+        return 0 if not validation.fatal_error else 1
     if args.command == "oos_audit":
         audit, reconciliation, errors = create_oos_audit()
         print("OOS audit export created:")
