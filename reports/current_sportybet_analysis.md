@@ -54,7 +54,11 @@ It does not log in, scrape, place, submit, or automate bets.
 
 ### Data-quality warnings
 
-- 6 feature values require model imputation
+- 3 predictor values require model imputation
+
+### Expected unavailable target fields
+
+- `full_time_result`, `full_time_home_goals`, `full_time_away_goals` are unavailable because the fixture has not occurred yet. They are result/target fields, not model predictors, and are not counted as predictor imputation warnings.
 
 Calibration uses the existing validation/OOS confidence-bucket results. It is historical context, not a confidence interval or guarantee.
 

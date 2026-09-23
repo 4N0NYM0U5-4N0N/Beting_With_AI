@@ -60,6 +60,11 @@ MODEL_LABELS = {
     "random_forest": "Random Forest",
     "gradient_boosting": "Gradient Boosting",
 }
+TARGET_COLUMNS = [
+    "full_time_result",
+    "full_time_home_goals",
+    "full_time_away_goals",
+]
 
 
 @dataclass
@@ -366,6 +371,7 @@ def _quality_warnings(
     feature_row: pd.Series,
     model_probabilities: dict[str, np.ndarray],
     validation_warnings: list[str],
+    predictor_columns: list[str],
 ) -> list[str]:
     warnings = list(validation_warnings)
     for prefix in ("home_team", "away_team"):
@@ -375,9 +381,9 @@ def _quality_warnings(
             warnings.append(f"insufficient rolling-5 sample for {prefix.replace('_team', '')} team")
     if float(feature_row.get("h2h_matches_played", 0)) == 0:
         warnings.append("missing H2H history")
-    missing_features = int(feature_row.isna().sum())
-    if missing_features:
-        warnings.append(f"{missing_features} feature values require model imputation")
+    missing_predictors = int(feature_row.reindex(predictor_columns).isna().sum())
+    if missing_predictors:
+        warnings.append(f"{missing_predictors} predictor values require model imputation")
     for model, probabilities in model_probabilities.items():
         if len(probabilities) != 3 or not np.isfinite(probabilities).all() or not np.isclose(probabilities.sum(), 1.0, atol=1e-8):
             warnings.append(f"model probability anomaly: {model}")
@@ -511,6 +517,7 @@ def run_current_analysis(
             feature_row,
             model_probabilities,
             validation.warnings.get(str(fixture_key), []),
+            safe_predictors,
         )
         calibration_details: dict[str, Any] = {}
         for model_name, probabilities in model_probabilities.items():
@@ -564,6 +571,11 @@ def run_current_analysis(
                 "warnings": fixture_warnings,
                 "calibration": calibration_details,
                 "feature_row": feature_row,
+                "unavailable_target_fields": [
+                    column
+                    for column in TARGET_COLUMNS
+                    if column in feature_row and pd.isna(feature_row[column])
+                ],
             }
         )
 
@@ -686,6 +698,18 @@ def _write_analysis_report(
             ]
         )
         lines.extend(f"- {warning}" for warning in item["warnings"] or ["None."])
+        lines.extend(
+            [
+                "",
+                "### Expected unavailable target fields",
+                "",
+                "- "
+                + ", ".join(f"`{column}`" for column in item["unavailable_target_fields"])
+                + " are unavailable because the fixture has not occurred yet. "
+                "They are result/target fields, not model predictors, and are not counted "
+                "as predictor imputation warnings.",
+            ]
+        )
         lines.extend(
             [
                 "",

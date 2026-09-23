@@ -7,6 +7,7 @@ import pandas as pd
 
 from src.current_odds import (
     ANALYSIS_COLUMNS,
+    _quality_warnings,
     run_current_analysis,
     validate_current_odds,
 )
@@ -143,6 +144,39 @@ class CurrentOddsTests(unittest.TestCase):
         )
         built = build_current_features(historical, current).frame.iloc[0]
         self.assertEqual(float(built["home_team_overall_matches_played"]), 1.0)
+
+    def test_target_fields_do_not_count_as_predictor_imputation(self):
+        feature_row = pd.Series(
+            {
+                "full_time_result": np.nan,
+                "full_time_home_goals": np.nan,
+                "full_time_away_goals": np.nan,
+                "home_league_position_before_match": np.nan,
+                "away_league_position_before_match": np.nan,
+                "league_position_difference_before_match": np.nan,
+                "home_team_overall_matches_played": 5.0,
+                "away_team_overall_matches_played": 5.0,
+                "home_team_rolling5_matches_available": 5.0,
+                "away_team_rolling5_matches_available": 5.0,
+                "h2h_matches_played": 1.0,
+            }
+        )
+        warnings = _quality_warnings(
+            feature_row,
+            {
+                "logistic_regression": np.array([0.4, 0.3, 0.3]),
+                "random_forest": np.array([0.4, 0.3, 0.3]),
+                "gradient_boosting": np.array([0.4, 0.3, 0.3]),
+            },
+            [],
+            [
+                "home_league_position_before_match",
+                "away_league_position_before_match",
+                "league_position_difference_before_match",
+            ],
+        )
+        self.assertIn("3 predictor values require model imputation", warnings)
+        self.assertNotIn("6 predictor values require model imputation", warnings)
 
     def test_analysis_outputs_all_models_probability_sums_and_ev(self):
         with tempfile.TemporaryDirectory() as directory:

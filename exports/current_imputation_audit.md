@@ -6,13 +6,14 @@ This audit covers the synthetic fixture analyzed from `current_sportybet_odds.cs
 
 - Date: `2026-09-25`
 - Fixture: `Man United` vs `Arsenal`
-- Current feature-row missing values counted by the warning: **6**
+- Current feature-row missing values: **6**
+- Actual missing model predictors reported by the diagnostic: **3**
 
 The current feature row contains six `NaN` values. Three are current-match target
-fields that are intentionally absent and are not model predictors. Three are
-league-position predictors that are absent because the current fixture is assigned
-the `CURRENT` season and no results have been processed into a `CURRENT` season
-table.
+fields that are intentionally absent and are not model predictors. The diagnostic
+excludes those fields and reports only the three missing league-position predictors.
+Those predictors are absent because the current fixture is assigned the `CURRENT`
+season and no results have been processed into a `CURRENT` season table.
 
 | feature | missing_reason | imputation_method | imputed_value | training_consistency | leakage_risk |
 |---|---|---|---:|---|---|
@@ -33,13 +34,13 @@ table.
 
 ## Classification
 
-**NEEDS FIX — warning diagnostic only.**
+**EXPECTED — after diagnostic correction.**
 
 The underlying imputation of the three missing league-position predictors is
 **EXPECTED** for a newly analyzed fixture whose current-season table has no
-historical prefix. The warning reports six missing “feature values” because it
-counts all `NaN` values in the complete current feature row, including the three
-target fields that are intentionally absent and excluded from model inputs. Thus,
-the warning overstates the number of model-input values requiring imputation by
-three. No methodology, model, feature definition, historical output, or current
-analysis calculation was changed as part of this audit.
+historical prefix. The diagnostic now reports **3 predictor values require model
+imputation**. It separately states that `full_time_result`,
+`full_time_home_goals`, and `full_time_away_goals` are unavailable because the
+fixture has not occurred yet; these fields are not predictors and are not counted
+as imputation warnings. No methodology, model, feature definition, historical
+output, or current analysis calculation was changed as part of this correction.
